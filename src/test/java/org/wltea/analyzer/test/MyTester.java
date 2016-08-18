@@ -15,12 +15,12 @@ import org.wltea.analyzer.lucene.IKTokenizer;
 
 public class MyTester extends TestCase{
 
-    String str = new String("马云和阿里巴巴都很牛。居然之家与欧特克之间有着战略合作。" +
+    String str = new String("马云和阿里巴巴都很牛。居然之家与欧特克之间有着战略合作。长春市长春药店。乒乓球拍卖啦。薄熙来到重庆。周杰轮周杰伦，范伟骑范玮琪。" +
             "Autodesk builds software that helps people imagine, design, and create a better world.");
     Reader input = new StringReader(str);
 
     public void testIKTokenizer(){
-        testTokenizer(new IKTokenizer(input, false)); // 采用最细粒度切分
+        testTokenizer(new IKTokenizer(input, false)); // 最细粒度切分
     }
 
     public void testIKTokenizerWithMaxWord(){
