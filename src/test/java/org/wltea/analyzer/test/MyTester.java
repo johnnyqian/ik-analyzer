@@ -1,40 +1,44 @@
 package org.wltea.analyzer.test;
 
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import junit.framework.TestCase;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import org.wltea.analyzer.IKSegmentation;
-import org.wltea.analyzer.Lexeme;
+
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.tokenattributes.TermAttribute;
+import org.wltea.analyzer.lucene.IKTokenizer;
 
 /**
  * Created by qianjo on 8/16/2016.
  */
+
 public class MyTester extends TestCase{
 
-    public void testCustomizedDictionary(){
-        String str = new String("马云和阿里巴巴都很牛。居然之家与欧特克之间有着战略合作。");
-        IKAnalysis(str);
+    String str = new String("马云和阿里巴巴都很牛。居然之家与欧特克之间有着战略合作。" +
+            "Autodesk builds software that helps people imagine, design, and create a better world.");
+    Reader input = new StringReader(str);
+
+    public void testIKTokenizer(){
+        testTokenizer(new IKTokenizer(input, false)); // 采用最细粒度切分
     }
 
-    public String IKAnalysis(String str) {
-        StringBuffer sb = new StringBuffer();
+    public void testIKTokenizerWithMaxWord(){
+        testTokenizer(new IKTokenizer(input, true)); // 最大词长切分
+    }
+
+    private void testTokenizer(TokenStream tokenizer) {
         try {
-            byte[] bt = str.getBytes();
-            InputStream ip = new ByteArrayInputStream(bt);
-            Reader read = new InputStreamReader(ip);
-            IKSegmentation iks = new IKSegmentation(read, false); // true 用智能分词，false细粒度
-            Lexeme t;
-            while ((t = iks.next()) != null) {
-                sb.append(t.getLexemeText() + " , ");
+            List<String> termList = new ArrayList<String>();
+
+            while(tokenizer.incrementToken()){
+                TermAttribute termAtt = tokenizer.getAttribute(TermAttribute.class);
+                termList.add(termAtt.term());
             }
-            sb.delete(sb.length() - 3, sb.length());
+
+            System.out.println(String.join(" | ", termList));
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println(sb.toString());
-        return sb.toString();
     }
 }
