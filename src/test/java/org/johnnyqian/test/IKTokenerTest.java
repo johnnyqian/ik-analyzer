@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.wltea.analyzer.test;
+package org.johnnyqian.test;
 
 import java.io.IOException;
 import java.io.StringReader;

@@ -1,4 +1,4 @@
-package org.wltea.analyzer.test;
+package org.johnnyqian.test;
 
 import java.io.*;
 import java.util.ArrayList;

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.wltea.analyzer.test;
+package org.johnnyqian.test;
 
 import org.wltea.analyzer.cfg.Configuration;
 
