@@ -4,21 +4,25 @@ import junit.framework.TestCase;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.TextInputFormat;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.tokenattributes.TermAttribute;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.Function2;
-import org.apache.spark.api.java.function.PairFunction;
+import org.apache.spark.api.java.function.*;
+import org.wltea.analyzer.lucene.IKTokenizer;
 import scala.Tuple2;
 
-import java.util.Arrays;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SparkWordCount extends TestCase {
     public void test(){
         SparkConf conf = new SparkConf().setMaster("local").setAppName("WordCount");
+        conf.set("spark.hadoop.validateOutputSpecs", "false");
         JavaSparkContext sc = new JavaSparkContext(conf);
 
         //JavaRDD<String> input = sc.textFile("src/test/resources/射雕英雄传.txt");
@@ -28,7 +32,7 @@ public class SparkWordCount extends TestCase {
         );
 
         JavaRDD<String> words = input.flatMap(
-                (FlatMapFunction<String, String>) s -> Arrays.asList(s.split(" "))
+                (FlatMapFunction<String, String>) s -> Tokenization(new IKTokenizer(new StringReader(s), true))
         );
 
         JavaPairRDD<String, Integer> counts = words.mapToPair(
@@ -37,8 +41,25 @@ public class SparkWordCount extends TestCase {
                 (Function2<Integer, Integer, Integer>) (x, y) -> x + y
         );
 
-        counts.map(
-                (Function<Tuple2<String, Integer>, String>) x-> x._1 + ',' + x._2
-        ).saveAsTextFile("output");
+        counts.filter(item -> item._1.length() > 1)
+                .mapToPair(item -> item.swap())
+                .sortByKey(false)
+                .mapToPair(item -> item.swap())
+                .map((Function<Tuple2<String, Integer>, String>) x-> x._1 + ',' + x._2)
+                .saveAsTextFile("output");
+    }
+
+    private static List<String> Tokenization(TokenStream tokenizer) {
+        List<String> termList = new ArrayList<>();
+        try {
+            while(tokenizer.incrementToken()){
+                TermAttribute termAtt = tokenizer.getAttribute(TermAttribute.class);
+                termList.add(termAtt.term());
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return termList;
     }
 }
